@@ -27,7 +27,9 @@ app.post("/api/agent", async (req, res) => {
     const { message, profile } = UserSchema.parse(req.body);
 
     const context = await retrieveContext(message);
+
     const bmi = calculateBMI(profile.weightKg, profile.heightCm);
+
     const calories = estimateCalories(
       profile.weightKg,
       profile.heightCm,
@@ -38,8 +40,15 @@ app.post("/api/agent", async (req, res) => {
 
     const prompt = `
 You are a helpful Gym AI Agent.
-You give practical diet and workout advice.
-Do not give medical diagnosis.
+
+IMPORTANT RESPONSE RULES:
+- Answer only in clean English.
+- Do not use Hinglish.
+- Use clear highlighted headings.
+- After every heading, leave one blank line.
+- Under each heading, write short and clean points.
+- Keep the answer practical and easy to follow.
+
 User Profile:
 Age: ${profile.age}
 Gender: ${profile.gender}
@@ -57,13 +66,32 @@ ${context}
 User Question:
 ${message}
 
-Answer in Hinglish.
-Give:
-1. Direct answer
-2. Diet advice
-3. Exercise plan
-4. Mistakes to avoid
-5. Safety note
+Format your answer exactly like this:
+
+**Direct Answer**
+
+Your short answer here.
+
+**Diet Plan**
+
+Meal 1: ...
+Meal 2: ...
+Meal 3: ...
+
+**Exercise You Need To Do**
+
+Push-ups: ...
+Pull-ups: ...
+Squats: ...
+
+**Mistakes To Avoid**
+
+Point 1...
+Point 2...
+
+**Safety Note**
+
+A simple safety warning.
 `;
 
     const response = await ollama.chat({
@@ -77,7 +105,9 @@ Give:
       calories
     });
   } catch (err: any) {
-    res.status(400).json({ error: err.message || "Something went wrong" });
+    res.status(400).json({
+      error: err.message || "Something went wrong"
+    });
   }
 });
 
